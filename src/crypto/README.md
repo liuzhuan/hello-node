@@ -34,7 +34,7 @@ crypto.getHashes()
 在 Node.js 中，为了使用散列算法，首先应该使用 `createHash` 方法创建一个 `hash` 对象：
 
 ```js
-const hash crypto.createHash(algorithm)
+const hash = crypto.createHash(algorithm)
 ```
 
 `createHash` 方法的参数是一个算法名称，比如 'sha1', 'md5', 'sha256', 'sha512' 和 'ripemd160' 等，用于指定需要使用的散列算法。该方法返回被创建的 hash 对象。
@@ -227,17 +227,118 @@ const text = 'test'
 cipher.update(text, 'binary', 'hex')
 const crypted = cipher.final('hex')
 console.log(crypted)
+// => ee3a468532170d2c
 ```
 
 ![Cipher Class](../img/cipher.jpeg)
 
 ### 2. 解密数据
 
-在 crypto 模块中，`Decipher` 类用于对加密后的数据进行解密操作。
+在 crypto 模块中，`Decipher` 类用于对加密后的数据进行解密操作。解密之前，需要首先创建 decipher 对象，创建方法也有两种：
 
-### 3. 
+- `createDecipher(algorithm, password)`
+- `createDecipheriv(algorithm, password, iv)`
 
-### 4. 
+创建 decipher 对象后，可以使用其 `update` 方法指定需要被解密的数据。使用 decipher 对象的 `final` 方法来返回经过解密之后的原始数据：
+
+```js
+decipher.update(data[, input_encoding][, output_encoding])
+decipher.final([output_encoding])
+```
+
+以下是上面加密数据对应的解密算法：
+
+```js
+const decipher = crypto.createDecipher('blowfish', key)
+const dec = decipher.update(crypted, 'hex', 'utf8')
+dec += decipher.final('utf8')
+console.log(dec)
+```
+
+### 3. 创建签名
+
+在网络中，私钥的拥有者可以在一段数据被发送之前先对该数据进行签名操作，在签名的过程中，将对这段数据执行加密处理。再经过加密后的数据发送之后，数据的接收者可以通过公钥的使用来对该签名进行解密及验证操作，以确保这段数据是私钥的拥有者所发出的原始数据，且在网络的传输过程中未被修改。
+
+在 Node.js 中，在进行签名操作之前，首先需要使用 `createSign` 方法创建一个 sign 对象：
+
+```js
+/**
+* @param {string} algorithm - 指定在加密该数据时所使用的算法，比如 'RSA-SHA256'
+* @return {Sign}
+*/
+const sign = createSign(algorithm)
+```
+
+在创建了一个 sign 对象后，可以使用该对象的 `update` 方法来指定需要被加密的数据：
+
+```js
+/**
+* @param {string|Buffer} data - 指定需要被加密的数据
+*/
+sign.update(data)
+```
+
+可以使用 sign 对象的 `sign` 方法对数据进行签名。在使用了 sign 对象的 `sign` 方法之后，不能再使用 `update` 方法追加数据。`sign` 方法类似封条。
+
+```js
+/**
+* @param {string} private_key - 指定 PEM 格式的私钥
+* @param {string} output_format - 用于指定签名输出时所使用的编码格式，比如 'hex', 'binary' 或 'base64'
+* @return {Buffer|string}
+*/
+sign.sign(private_key[, output_format])
+```
+
+下面是一个签名的例子：
+
+```js
+const crypto = require('crypto')
+const fs = require('fs')
+
+const pem = fs.readFileSync('key.pem')
+const key = pem.toString('ascii')
+
+const sign = crypto.createSign('RSA-SHA256')
+sign.update('test')
+console.log(sign.sign(key, 'hex'))
+```
+
+### 4. 签名验证
+
+在 crypto 模块中，Verify 类用于对签名进行验证操作。验证之前，先创建 verify 对象。创建之后，使用 `update` 方法来指定需要被验证的数据。使用 `verify` 方法进行验证。
+
+```js
+const verify = crypto.createVerify(algorithm)
+verify.update(data)
+
+/**
+* @param {string} object - 用于指定验证时所使用的对象，可以为一个 RSA 公钥、一个 DSA 公钥或一个 X.509 证书
+* @param {Sign} signature - 用于指定被验证的签名
+* @param {string} signature_format - 用于指定在生成该签名时所使用的编码格式，可指定参数值为 'hex', 'binary' 或 'base64'
+* @return {boolean}
+*/
+verify.verify(object, signature[, signature_format])
+```
+
+下面是一个验证签名的样例：
+
+```js
+const crypto = require('crypto')
+const fs = require('fs')
+
+const privatePem = fs.readFileSync('key.pem')
+const publicPem = fs.readFileSync('cert.pem')
+const key = privatePem.toString()
+const pubKey = publicPem.toString()
+const data = 'test'
+const sign = crypto.createSign('RSA-SHA256')
+sign.update(data)
+const sig = sign.sign(key, 'hex')
+
+const verify = crypto.createVerify('RSA-SHA256')
+verify.update(data)
+console.log(verify.verify(pubKey, sig, 'hex'))
+```
 
 ## REF
 
