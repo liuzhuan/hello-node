@@ -131,7 +131,113 @@ s.on('end', () => {
 
 ## 公钥加密
 
+Node.js 提供了以下 4 个与公钥加密相关的类：
 
+- `Cipher`：用于加密数据
+- `Decipher`: 用于解密数据
+- `Sign`: 用于生成签名
+- `Verify`: 用于验证签名
+
+在使用 HMAC 算法时，只需要使用一个私钥，但在使用公钥加密技术时，需要使用公钥及私钥，其中私钥用于解密数据以及对数据进行签名，而公钥用于创建只有私钥的拥有者能够读出的加密数据，以及对私钥的拥有者的签名进行验证。
+
+在 OpenSSL 工具中，可以使用如下命令来为一个私钥创建一个 PEM 格式的公钥：
+
+```sh
+openssl req -key key.pem -new -x509 -out cert.pem
+```
+
+创建公钥时需要提供一些附加的信息，如国家名称简写，省份，城市等。
+
+接下来，对公钥加密相关的 4 个类进行逐一介绍。
+
+### 1. 加密数据
+
+在 crypto 模块中，`Cipher` 类用于对数据进行加密操作。在加密数据之前，首先需要创建一个 `cipher` 对象。可以通过如下所示的两种方法创建 cipher 对象
+
+**createCipher**
+
+`createCipher()` 方法使用指定的算法与密码来创建 cipher 对象，其用法如下：
+
+```js
+/**
+* @param {string} algorithm - 指定加密数据所使用的算法，如 'blowfish', 'aes-256-cbc' 等
+* @param {string|Buffer} password - 指定加密时所使用的密码
+* @return {Cipher}
+*/
+const cipher = crypto.createCipher(algorithm, password)
+```
+
+**createCipheriv**
+
+`createCipheriv()` 方法使用指定的算法、密码和初始向量（`Initialization Vector`, IV）来创建 cipher 对象。其用法如下：
+
+```js
+/**
+* @param {string} algorithm - 指定加密算法
+* @param {string|Buffer} password - 指定加密时所使用的密码 
+* @param {string|Buffer} iv - 指定加密时所使用的初始向量
+* @return {Cipher}
+*/
+crypto.createCipheriv(algorithm, password, iv)
+```
+
+在 Node.js 中，使用**分块加密法**进行加密。分块加密法将固定长度的数据块或纯文本数据加密成长度相同的密码块数据。该转换的前提是用户提供密码。在解密时，要使用相同的密码对密码块数据进行逆转换。
+
+此处的“固定长度”称为**数据块的尺寸**。不同算法有不同的数据块的尺寸。例如，blowfish 算法的数据块的尺寸是 40 字节。
+
+分块加密法可以在网站被攻击时防止加密数据以及加密时所使用的密码泄漏。
+
+在创建了一个 cipher 对象后，可以使用 `update` 方法来指定需要被加密的数据：
+
+```js
+/**
+* @param {Buffer|string} data - 指定需要加密的数据
+* @param {string} input_encoding - 指定被加密的数据使用的编码格式，比如 'utf8', 'ascii' 和 'binary'
+* @param {string} output_encoding - 指定输出加密数据时使用的编码格式，如 'hex', 'binary' 或 'base64'
+* @return {Buffer|string}
+*/
+cipher.update(data, [input_encoding], [output_encoding])
+```
+
+`update` 返回被加密的数据。可以使用 `update` 方法多次添加需要加密的数据。
+
+与 hash 对象及 hmac 对象的 update 不同的是，cipher 对象的 update 方法总是返回一个被分块的加密数据，因此块的大小是非常关键的。如果加密数据的字节数足够创建一个或者多个块，update 方法将返回被加密的数据。如果加密数据的字节数不足以创建一个块，加密数据将被缓存在 cipher 对象中。
+
+可以使用 cipher 对象的 `final` 方法返回加密数据。当该方法被调用时，任何 cipher 对象中所缓存的数据都将被加密。如果加密数据的字节数不足以创建一个块，将使用 `PKCS` 填充方式来填充这个块。在使用了 cipher 对象的 `final` 方法后，不能再向 cipher 对象中追加数据。该方法用法如下：
+
+```js
+/**
+* @param {string} output_encoding - 指定输出加密数据的编码方式，比如 'hex', 'binary' 和 'base64' 等
+* @return {Buffer|string}
+*/
+cipher.final([output_encoding])
+```
+
+以下是一个加密样例：
+
+```js
+const crypto = require('crypto')
+const fs = require('fs')
+
+const pem = fs.readFileSync('key.pem')
+const key = pem.toString('ascii')
+
+const cipher = crypto.createCipher('blowfish', key)
+const text = 'test'
+cipher.update(text, 'binary', 'hex')
+const crypted = cipher.final('hex')
+console.log(crypted)
+```
+
+![Cipher Class](../img/cipher.jpeg)
+
+### 2. 解密数据
+
+在 crypto 模块中，`Decipher` 类用于对加密后的数据进行解密操作。
+
+### 3. 
+
+### 4. 
 
 ## REF
 
