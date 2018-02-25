@@ -340,6 +340,8 @@ verify.update(data)
 console.log(verify.verify(pubKey, sig, 'hex'))
 ```
 
+（完）
+
 ## REF
 
 - [Journey into cryptography - khan][khan]
