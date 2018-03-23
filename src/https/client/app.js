@@ -1,5 +1,5 @@
 /**
- * 本文件用来测试 `http.request` 的用法
+ * 本文件用来测试 `https.request` 的用法
  * 后台接口 http://api.myjson.com/bins/wszkv
  */
 
