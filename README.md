@@ -1,5 +1,3 @@
-# hello-node
+# Hello Node
 
-Hello Node
-
-[目录](./src/SUMMARY.md)
+1. [0. 安装配置](./src/0.md)
