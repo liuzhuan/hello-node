@@ -1,9 +1,5 @@
 # Hello Node
 
-- [0. 安装配置](./src/0.md)
-- [1. 模块和 npm](./src/1.md)
-- [2. 事件机制](./src/2.md)
-- [3. TCP 服务器](./src/3.md)
 - [4. HTTP 服务器](./src/4.md)
 - [5. Express 服务器](./src/5.md)
 - [6. 错误处理](./src/6.md)
